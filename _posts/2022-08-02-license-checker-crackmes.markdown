@@ -4,6 +4,7 @@ layout: post
 title:  "Simple License Checkers"
 
 ---
+Solving simple license checkers with radare2
 
 ## license checker 0x01
 [NomanProdhan's License Checker 0x01](https://crackmes.one/crackme/619eda7b33c5d455dece628d)
