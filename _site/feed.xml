@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.2">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2023-08-04T20:10:17+02:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">Random stuff</title><subtitle>Random stuff goes here sometimes</subtitle><entry><title type="html">Repacking Android apps</title><link href="http://localhost:4000/2023/08/04/Android-apk-repacking.html" rel="alternate" type="text/html" title="Repacking Android apps" /><published>2023-08-04T00:00:00+02:00</published><updated>2023-08-04T00:00:00+02:00</updated><id>http://localhost:4000/2023/08/04/Android-apk-repacking</id><content type="html" xml:base="http://localhost:4000/2023/08/04/Android-apk-repacking.html"><![CDATA[<h2 id="setup">Setup</h2>
+
+<p>On arch linux install android build tools from arch linux aur:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>yay -S android-sdk-build-tools
+</code></pre></div></div>
+
+<p>get apktool from git or aur</p>
+
+<p><a href="https://github.com/iBotPeaches/Apktool">apktool</a></p>
+
+<h2 id="unpacking">Unpacking</h2>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>apktool d someapp.apk
+</code></pre></div></div>
+
+<h2 id="repacking">Repacking</h2>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mkdir keys
+keytool -genkey -v -keystore keys/androidpersonal.keystore -alias AndroidPersonalKeystore -keyalg RSA -validity 1000
+apktool b -o repacked.apk minecraft-1.20.20.20-apkmodget.com
+zipalign -p -f -v 4 repacked.apk repacked_zipaligned_mc.apk
+apksigner sign -ks ./keys/androidpersonal.keystore --v1-signing-enabled true --v2-signing-enabled true repacked_zipaligned_mc.apk
+adb install repacked_zipaligned_mc.apk
+
+</code></pre></div></div>]]></content><author><name></name></author><summary type="html"><![CDATA[Setup]]></summary></entry><entry><title type="html">MineCraft Android LAN max player limit bypass</title><link href="http://localhost:4000/2023/08/04/MineCraft-LAN-max-player-limit-patching.html" rel="alternate" type="text/html" title="MineCraft Android LAN max player limit bypass" /><published>2023-08-04T00:00:00+02:00</published><updated>2023-08-04T00:00:00+02:00</updated><id>http://localhost:4000/2023/08/04/MineCraft-LAN-max-player-limit-patching</id><content type="html" xml:base="http://localhost:4000/2023/08/04/MineCraft-LAN-max-player-limit-patching.html"><![CDATA[<p>Patching MineCraft on Android to bypass the max player limit</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>apktool d minecraft.apk
+</code></pre></div></div>
+
+<p>If using a split apk the libs are located in <code class="language-plaintext highlighter-rouge">split_config.arm64_v8a.apk</code></p>
+
+<p>After unpacking navigate to the libs folder and find <code class="language-plaintext highlighter-rouge">libminecraftpe.so</code></p>
+
+<p>Using radare2 to patch the binary</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+r2 minecraft-1.20.20.20/lib/armeabi-v7a/libminecraftpe.so
+
+ -- Move around the bytes with h,j,k,l! Arrow keys are neither portable nor efficient
+[0x036948a0]&gt; is~MaxPlayers
+28875  0x037ff242 0x037ff242 GLOBAL FUNC   54         _ZNK11AppPlatform27getDefaultNetworkMaxPlayersEv
+                                    AppPlatform::getDefaultNetworkMaxPlayers() const
+[0x036948a0]&gt; s 0x037ff242
+[0x037ff242]&gt; af
+[0x037ff242]&gt; pdf
+┌ 54: sym.AppPlatform::getDefaultNetworkMaxPlayers___const (int16_t arg1);
+│           ; arg int16_t arg1 @ r0
+│           ; var int16_t var_8h @ sp+0x8
+│           0x037ff242      d0b5           push {r4, r6, r7, lr}       ; AppPlatform::getDefaultNetworkMaxPlayers() const
+│           0x037ff244      02af           add r7, var_8h
+│           0x037ff246      0446           mov r4, r0                  ; arg1
+│           0x037ff248      0068           ldr r0, [r0]                ; arg1
+│           0x037ff24a      d0f82013       ldr.w r1, [r0, 0x320]       ; arg1
+│           0x037ff24e      2046           mov r0, r4
+│           0x037ff250      8847           blx r1
+│           0x037ff252      0128           cmp r0, 1
+│       ┌─&lt; 0x037ff254      0ed0           beq 0x37ff274
+│       │   0x037ff256      2068           ldr r0, [r4]
+│       │   0x037ff258      d0f86413       ldr.w r1, [r0, 0x364]
+│       │   0x037ff25c      2046           mov r0, r4
+│       │   0x037ff25e      8847           blx r1
+│       │   0x037ff260      0023           movs r3, 0
+│       │   0x037ff262      0022           movs r2, 0
+│       │   0x037ff264      c9f64043       movt r3, 0x9c40
+│       │   0x037ff268      181a           subs r0, r3, r0
+│       │   0x037ff26a      72eb0100       sbcs.w r0, r2, r1
+│      ┌──&lt; 0x037ff26e      01d2           bhs 0x37ff274
+│      ││   0x037ff270      0820           movs r0, 8
+│      ││   0x037ff272      d0bd           pop {r4, r6, r7, pc}
+│      └└─&gt; 0x037ff274      0520           movs r0, 5                  
+└           0x037ff276      d0bd           pop {r4, r6, r7, pc}
+[0x037ff242]&gt;
+</code></pre></div></div>
+
+<p>at <code class="language-plaintext highlighter-rouge">0x037ff274</code> here is the 5 player max limit</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[0x037ff242]&gt; s 0x037ff274
+[0x037ff274]&gt; oo+
+[0x037ff274]&gt; wa movs r0, 100
+INFO: Written 2 byte(s) (movs r0, 100) = wx 6420 @ 0x037ff274
+</code></pre></div></div>
+<p>Print to see the modification</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[0x037ff274]&gt; pd1
+│           0x037ff274      6420           movs r0, 0x64               ; 'd'
+[0x037ff274]&gt;
+</code></pre></div></div>]]></content><author><name></name></author><summary type="html"><![CDATA[Patching MineCraft on Android to bypass the max player limit]]></summary></entry><entry><title type="html">TryCrackMe</title><link href="http://localhost:4000/2022/08/03/TryCrackMe.html" rel="alternate" type="text/html" title="TryCrackMe" /><published>2022-08-03T00:00:00+02:00</published><updated>2022-08-03T00:00:00+02:00</updated><id>http://localhost:4000/2022/08/03/TryCrackMe</id><content type="html" xml:base="http://localhost:4000/2022/08/03/TryCrackMe.html"><![CDATA[<h2 id="trycrackme">TryCrackMe</h2>
+<p><a href="https://crackmes.one/crackme/61c8deff33c5d413767ca0ea">MrEmpy’s TryCrackMe</a></p>
+
+<p>Open the binary with radare2</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Ξ ~/crackmes → r2 trycrackme
+Warning: run r2 with -e bin.cache=true to fix relocations in disassembly
+ -- Documentation is for weak people.
+[0x000010a0]&gt; aa
+[x] Analyze all flags starting with sym. and entry0 (aa)
+[x] Analyze all functions arguments/locals
+[0x000010a0]&gt; s main
+</code></pre></div></div>
+
+<p>Set a breakpoint at 0x000012d3 <code class="language-plaintext highlighter-rouge">db 0x000012d3</code></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+0x000012c8      488d4d90       lea rcx, [var_70h]
+0x000012cc      488d8550ffff.  lea rax, [var_b0h]
+0x000012d3 b    4889ce         mov rsi, rcx
+0x000012d6      4889c7         mov rdi, rax
+0x000012d9      e852fdffff     call sym.imp.strncmp 
+</code></pre></div></div>
+
+<p>Reopen the binary in debug mode <code class="language-plaintext highlighter-rouge">ood</code></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&gt; ood
+File dbg:///home/w00t/crackmes/trycrackme reopened in read-write mode
+</code></pre></div></div>
+<p>Continue until breakpoint <code class="language-plaintext highlighter-rouge">dc</code></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&gt; dc
+
+  _____          ___             _   __  __
+ |_   _| _ _  _ / __|_ _ __ _ __| |_|  \/  |___
+   | || '_| || | (__| '_/ _` / _| / / |\/| / -_)
+   |_||_|  \_, |\___|_| \__,_\__|_\_\_|  |_\___|
+           |__/
+
+Put the key: 999999
+hit breakpoint at: 0x55ba8a93f2d3
+</code></pre></div></div>
+
+<p>Show register refrences <code class="language-plaintext highlighter-rouge">drr</code></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&gt; drr
+role reg     value            refstr
+――――――――――――――――――――――――――――――――――――
+     riz     0                0
+R0   rax     7ffe8b609db0     [stack] rax stack R W 0x393939393939 999999
+     rbx     7ffe8b609f78     [stack] rbx stack R W 0x7ffe8b60b5e5
+A3   rcx     7ffe8b609df0     [stack] rcx,rdi stack R W 0x3337333730343433 34407373373234353336
+A2   rdx     14               20 rdx
+A4   r8      7fddabb3c8c0     r8 0123456789abcdefghijklmnopqrstuvwxyz
+A5   r9      78               120 r9 ascii ('x')
+     r10     7ffe8b609b16     [stack] r10 stack R W 0xe8a78f503e003633 36
+     r11     0                0
+     r12     0                0
+     r13     7ffe8b609f88     [stack] r13 stack R W 0x7ffe8b60b604
+     r14     0                0
+     r15     7fddabbd6000     /usr/lib/ld-linux-x86-64.so.2 r15 library R W 0x7fddabbd72a0
+A1   rsi     55ba8a94012b     /home/w00t/crackmes/trycrackme .rodata rsi program R 0x636e49205d2d5b00
+A0   rdi     7ffe8b609df0     [stack] rcx,rdi stack R W 0x3337333730343433 34407373373234353336
+SP   rsp     7ffe8b609d80     [stack] rsp stack R W 0x7ffe8b609f78
+BP   rbp     7ffe8b609e60     [stack] rbp stack R W 0x1
+PC   rip     55ba8a93f2d3     /home/w00t/crackmes/trycrackme .text rip main program R X 'mov rsi, rcx' 'trycrackme'
+     cs      33               51 ascii ('3')
+     rflags  202              514 rflags
+SN   orax    ffffffffffffffff
+     ss      2b               43 ascii ('+')
+     fs      7fddab97a740
+     gs      0                0
+     ds      0                0
+     es      0                0
+     fs_base 0                0
+     gs_base 0                0
+</code></pre></div></div>
+
+<p>Password is in rcx</p>
+
+<p>Solution: <code class="language-plaintext highlighter-rouge">34407373373234353336</code></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Ξ ~/crackmes → ./trycrackme
+
+  _____          ___             _   __  __
+ |_   _| _ _  _ / __|_ _ __ _ __| |_|  \/  |___
+   | || '_| || | (__| '_/ _` / _| / / |\/| / -_)
+   |_||_|  \_, |\___|_| \__,_\__|_\_\_|  |_\___|
+           |__/
+
+Put the key: 34407373373234353336
+[+] Correct key!%
+</code></pre></div></div>]]></content><author><name></name></author><summary type="html"><![CDATA[TryCrackMe MrEmpy’s TryCrackMe]]></summary></entry><entry><title type="html">Simple License Checkers</title><link href="http://localhost:4000/2022/08/02/license-checker-crackmes.html" rel="alternate" type="text/html" title="Simple License Checkers" /><published>2022-08-02T00:00:00+02:00</published><updated>2022-08-02T00:00:00+02:00</updated><id>http://localhost:4000/2022/08/02/license-checker-crackmes</id><content type="html" xml:base="http://localhost:4000/2022/08/02/license-checker-crackmes.html"><![CDATA[<p>Solving simple license checkers with radare2</p>
+
+<h2 id="license-checker-0x01">license checker 0x01</h2>
+<p><a href="https://crackmes.one/crackme/619eda7b33c5d455dece628d">NomanProdhan’s License Checker 0x01</a></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>r2 license_checker_1
+</code></pre></div></div>
+<p>print symbols with <code class="language-plaintext highlighter-rouge">is</code></p>
+
+<p><img src="/assets/license_checker_1/2022-08-02-143110.png" alt="alt text" title="Symbols" /></p>
+
+<p>Seek to the symbol main <code class="language-plaintext highlighter-rouge">s main</code></p>
+
+<p>Analyze the function with <code class="language-plaintext highlighter-rouge">af</code></p>
+
+<p>Print the function with <code class="language-plaintext highlighter-rouge">pdf</code></p>
+
+<p><img src="/assets/license_checker_1/2022-08-02-143145.png" alt="alt text" title="print main" /></p>
+
+<p>Inside main you can see the string it loads to compare against:</p>
+<pre><code class="language-assembly">lea rdx, str.KS_LICENSE_KEY_2021_REV_1 ; 0x2027 ; "KS-LICENSE-KEY-2021-REV-1"
+mov rsi, rdx
+mov rdi, rax
+call sym.imp.strcmp         ; int strcmp(const char *s1, const char *s2)
+</code></pre>
+<p>Solution: <code class="language-plaintext highlighter-rouge">./license_checker_1 KS-LICENSE-KEY-2021-REV-1</code></p>
+
+<h2 id="license-checker-0x02">license checker 0x02</h2>
+<p><a href="https://crackmes.one/crackme/61c62bde33c5d413767ca0a0">NomanProdhan’s License Checker 0x02</a></p>
+
+<p>Running the program with no args outputs:
+<code class="language-plaintext highlighter-rouge">Usage : %s &lt;your name here&gt; &lt;license key here&gt;</code></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>r2 license_checker_2
+</code></pre></div></div>
+<p>Check strings inside the binary with the <code class="language-plaintext highlighter-rouge">iz</code> command:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[0x0000115a]&gt; iz
+[Strings]
+nth paddr      vaddr      len size section type  string
+―――――――――――――――――――――――――――――――――――――――――――――――――――――――
+0   0x00002008 0x00002008 47  48   .rodata ascii Usage : %s &lt;your name here&gt; &lt;license key here&gt;\n
+1   0x00002038 0x00002038 12  13   .rodata ascii NomanProdhan
+2   0x00002045 0x00002045 25  26   .rodata ascii KS-LICENSE-KEY-2021-REV-2
+3   0x00002060 0x00002060 64  65   .rodata ascii Congratulations %s, premium service has been activated for you.\n
+4   0x000020a8 0x000020a8 39  40   .rodata ascii Sorry ! %s , %s is an invalid license.\n
+5   0x000020d0 0x000020d0 39  40   .rodata ascii Sorry ! %s , you don't have a license.\n
+</code></pre></div></div>
+<p>Check for symbols with the <code class="language-plaintext highlighter-rouge">is</code> command and grep with <code class="language-plaintext highlighter-rouge">~</code> for <code class="language-plaintext highlighter-rouge">main</code></p>
+
+<p>Command: <code class="language-plaintext highlighter-rouge">is~main</code></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>38  0x00001159 0x00001159 GLOBAL FUNC   259      main
+3   0x00000000 0x00000000 GLOBAL FUNC   16       imp.__libc_start_main
+</code></pre></div></div>
+<p>Seek to main function:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>s main
+</code></pre></div></div>
+<p>Grep for strcmp in the main:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[0x0000115a]&gt; pdf~strcmp
+0x000011ae      e88dfeffff     call sym.imp.strcmp         ; int strcmp(const char *s1, const char *s2)
+0x000011cf      e86cfeffff     call sym.imp.strcmp         ; int strcmp(const char *s1, const char *s2)
+</code></pre></div></div>
+<p>The first strcmp:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0x000011a1      488d15900e00.  lea rdx, str.NomanProdhan   ; 0x2038 ; "NomanProdhan"
+0x000011a8      4889d6         mov rsi, rdx
+0x000011ab      4889c7         mov rdi, rax
+0x000011ae      e88dfeffff     call sym.imp.strcmp         ; int strcmp(const char *s1, const char *s2)
+</code></pre></div></div>
+
+<p>Second strcmp:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0x000011c2      488d157c0e00.  lea rdx, str.KS_LICENSE_KEY_2021_REV_2 ; 0x2045 ; "KS-LICENSE-KEY-2021-REV-2"
+0x000011c9      4889d6         mov rsi, rdx
+0x000011cc      4889c7         mov rdi, rax
+0x000011cf      e86cfeffff     call sym.imp.strcmp         ; int strcmp(const char *s1, const char *s2)
+</code></pre></div></div>
+
+<p>Solution:
+<code class="language-plaintext highlighter-rouge">./license_checker_2 NomanProdhan KS-LICENSE-KEY-2021-REV-2</code></p>
+
+<h2 id="license-checker-0x03">license checker 0x03</h2>
+<p><a href="https://crackmes.one/crackme/62072dd633c5d46c8bcbfd9b">NomanProdhan’s License Checker 0x03</a></p>
+
+<p><code class="language-plaintext highlighter-rouge">r2 license_checker_3</code>
+Analyze symbols with <code class="language-plaintext highlighter-rouge">aa</code></p>
+
+<p>Print strings:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[0x00001179]&gt; iz
+[Strings]
+nth paddr      vaddr      len size section type  string
+―――――――――――――――――――――――――――――――――――――――――――――――――――――――
+0   0x00002008 0x00002008 51  52   .rodata ascii Usage : %s &lt;license pass code here [numbers only]&gt;\n
+1   0x00002040 0x00002040 35  36   .rodata ascii Premium access has been activated !
+2   0x00002064 0x00002064 18  19   .rodata ascii Wrong license code
+</code></pre></div></div>
+
+<p>Seek to main <code class="language-plaintext highlighter-rouge">s main</code></p>
+
+<p>Print summary of function with <code class="language-plaintext highlighter-rouge">pdfs</code>:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0x00001181 argc
+0x00001184 argv
+0x000011a7 str.Usage_:__s__license_pass_code_here__numbers_only___n
+0x000011ae str.Usage_:__s__license_pass_code_here__numbers_only___n
+0x000011b6 call sym.imp.printf
+0x000011c0 call sym.imp.exit
+0x000011c5:
+0x000011d5:
+0x000011f5 call sym.imp.atoi
+0x00001201:
+0x0000120f call sym.imp.strlen
+0x0000121f str.Premium_access_has_been_activated__
+0x00001226 str.Premium_access_has_been_activated__
+0x00001229 call sym.imp.puts
+0x00001233 call sym.imp.exit
+0x00001238:
+0x00001238 str.Wrong_license_code
+0x0000123f str.Wrong_license_code
+0x00001242 call sym.imp.puts
+0x0000124c call sym.imp.exit
+</code></pre></div></div>
+
+<p>Loop from main:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+┌─&gt; 0x55b204db41d5      488b45d0       mov rax, qword [var_30h]
+╎   0x55b204db41d9      4883c008       add rax, 8
+╎   0x55b204db41dd      488b10         mov rdx, qword [rax]
+╎   0x55b204db41e0      8b45f4         mov eax, dword [var_ch]
+╎   0x55b204db41e3      4898           cdqe
+╎   0x55b204db41e5      4801d0         add rax, rdx
+╎   0x55b204db41e8      0fb600         movzx eax, byte [rax]
+╎   0x55b204db41eb      8845ef         mov byte [var_11h], al
+╎   0x55b204db41ee      488d45ef       lea rax, [var_11h]
+╎   0x55b204db41f2      4889c7         mov rdi, rax
+╎   0x55b204db41f5      e866feffff     call sym.imp.atoi       ;[1] ; int atoi(const char *str)
+╎   0x55b204db41fa      0145f0         add dword [var_10h], eax // add the value returned from atoi
+╎   0x55b204db41fd      8345f401       add dword [var_ch], 1 	// add to the loop counter
+╎   0x55b204db4201      488b45d0       mov rax, qword [var_30h]
+╎   0x55b204db4205      4883c008       add rax, 8
+╎   0x55b204db4209      488b00         mov rax, qword [rax]
+╎   0x55b204db420c      4889c7         mov rdi, rax
+╎   0x55b204db420f      e82cfeffff     call sym.imp.strlen     ;[2] ; size_t strlen(const char *s)
+╎   0x55b204db4214      3945f4         cmp dword [var_ch], eax // check has looped strlen of argv[1]
+└─&lt; 0x55b204db4217      7cbc           jl 0x55b204db41d5
+    0x55b204db4219      837df032       cmp dword [var_10h], 0x32 // check if var_10h equals 0x32
+┌─&lt; 0x55b204db421d      7519           jne 0x55b204db4238
+│   0x55b204db421f      488d051a0e00.  lea rax, str.Premium_access_has_been_activated__    ; 0x55b204db5040 ; "Premium access has been activated !"
+</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">var_ch = loop counter</code></p>
+
+<p><code class="language-plaintext highlighter-rouge">var_10h = sum</code></p>
+
+<p>loops the length of input</p>
+
+<p>converts ascii to int</p>
+
+<p>adds the int in var_10h</p>
+
+<p>checks if looped strlen of input</p>
+
+<p>checks if var_10h is equal to 0x32</p>
+
+<p>Solution:
+Sum of all digits equal to 50</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./license_checker_3 5555555555
+Premium access has been activated !
+</code></pre></div></div>]]></content><author><name></name></author><summary type="html"><![CDATA[Solving simple license checkers with radare2]]></summary></entry></feed>

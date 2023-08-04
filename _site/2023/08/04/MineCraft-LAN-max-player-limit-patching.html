@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>MineCraft Android LAN max player limit bypass | Random stuff</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="MineCraft Android LAN max player limit bypass" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Patching MineCraft on Android to bypass the max player limit" />
+<meta property="og:description" content="Patching MineCraft on Android to bypass the max player limit" />
+<link rel="canonical" href="http://localhost:4000/2023/08/04/MineCraft-LAN-max-player-limit-patching.html" />
+<meta property="og:url" content="http://localhost:4000/2023/08/04/MineCraft-LAN-max-player-limit-patching.html" />
+<meta property="og:site_name" content="Random stuff" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2023-08-04T00:00:00+02:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="MineCraft Android LAN max player limit bypass" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2023-08-04T00:00:00+02:00","datePublished":"2023-08-04T00:00:00+02:00","description":"Patching MineCraft on Android to bypass the max player limit","headline":"MineCraft Android LAN max player limit bypass","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/2023/08/04/MineCraft-LAN-max-player-limit-patching.html"},"url":"http://localhost:4000/2023/08/04/MineCraft-LAN-max-player-limit-patching.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="Random stuff" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">Random stuff</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">MineCraft Android LAN max player limit bypass</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2023-08-04T00:00:00+02:00" itemprop="datePublished">Aug 4, 2023
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>Patching MineCraft on Android to bypass the max player limit</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>apktool d minecraft.apk
+</code></pre></div></div>
+
+<p>If using a split apk the libs are located in <code class="language-plaintext highlighter-rouge">split_config.arm64_v8a.apk</code></p>
+
+<p>After unpacking navigate to the libs folder and find <code class="language-plaintext highlighter-rouge">libminecraftpe.so</code></p>
+
+<p>Using radare2 to patch the binary</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+r2 minecraft-1.20.20.20/lib/armeabi-v7a/libminecraftpe.so
+
+ -- Move around the bytes with h,j,k,l! Arrow keys are neither portable nor efficient
+[0x036948a0]&gt; is~MaxPlayers
+28875  0x037ff242 0x037ff242 GLOBAL FUNC   54         _ZNK11AppPlatform27getDefaultNetworkMaxPlayersEv
+                                    AppPlatform::getDefaultNetworkMaxPlayers() const
+[0x036948a0]&gt; s 0x037ff242
+[0x037ff242]&gt; af
+[0x037ff242]&gt; pdf
+┌ 54: sym.AppPlatform::getDefaultNetworkMaxPlayers___const (int16_t arg1);
+│           ; arg int16_t arg1 @ r0
+│           ; var int16_t var_8h @ sp+0x8
+│           0x037ff242      d0b5           push {r4, r6, r7, lr}       ; AppPlatform::getDefaultNetworkMaxPlayers() const
+│           0x037ff244      02af           add r7, var_8h
+│           0x037ff246      0446           mov r4, r0                  ; arg1
+│           0x037ff248      0068           ldr r0, [r0]                ; arg1
+│           0x037ff24a      d0f82013       ldr.w r1, [r0, 0x320]       ; arg1
+│           0x037ff24e      2046           mov r0, r4
+│           0x037ff250      8847           blx r1
+│           0x037ff252      0128           cmp r0, 1
+│       ┌─&lt; 0x037ff254      0ed0           beq 0x37ff274
+│       │   0x037ff256      2068           ldr r0, [r4]
+│       │   0x037ff258      d0f86413       ldr.w r1, [r0, 0x364]
+│       │   0x037ff25c      2046           mov r0, r4
+│       │   0x037ff25e      8847           blx r1
+│       │   0x037ff260      0023           movs r3, 0
+│       │   0x037ff262      0022           movs r2, 0
+│       │   0x037ff264      c9f64043       movt r3, 0x9c40
+│       │   0x037ff268      181a           subs r0, r3, r0
+│       │   0x037ff26a      72eb0100       sbcs.w r0, r2, r1
+│      ┌──&lt; 0x037ff26e      01d2           bhs 0x37ff274
+│      ││   0x037ff270      0820           movs r0, 8
+│      ││   0x037ff272      d0bd           pop {r4, r6, r7, pc}
+│      └└─&gt; 0x037ff274      0520           movs r0, 5                  
+└           0x037ff276      d0bd           pop {r4, r6, r7, pc}
+[0x037ff242]&gt;
+</code></pre></div></div>
+
+<p>at <code class="language-plaintext highlighter-rouge">0x037ff274</code> here is the 5 player max limit</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[0x037ff242]&gt; s 0x037ff274
+[0x037ff274]&gt; oo+
+[0x037ff274]&gt; wa movs r0, 100
+INFO: Written 2 byte(s) (movs r0, 100) = wx 6420 @ 0x037ff274
+</code></pre></div></div>
+<p>Print to see the modification</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[0x037ff274]&gt; pd1
+│           0x037ff274      6420           movs r0, 0x64               ; 'd'
+[0x037ff274]&gt;
+</code></pre></div></div>
+
+
+  </div><a class="u-url" href="/2023/08/04/MineCraft-LAN-max-player-limit-patching.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Random stuff</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Random stuff</li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Random stuff goes here sometimes</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

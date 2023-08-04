@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Simple License Checkers | Random stuff</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="Simple License Checkers" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Solving simple license checkers with radare2" />
+<meta property="og:description" content="Solving simple license checkers with radare2" />
+<link rel="canonical" href="http://localhost:4000/2022/08/02/license-checker-crackmes.html" />
+<meta property="og:url" content="http://localhost:4000/2022/08/02/license-checker-crackmes.html" />
+<meta property="og:site_name" content="Random stuff" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-08-02T00:00:00+02:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Simple License Checkers" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-08-02T00:00:00+02:00","datePublished":"2022-08-02T00:00:00+02:00","description":"Solving simple license checkers with radare2","headline":"Simple License Checkers","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/2022/08/02/license-checker-crackmes.html"},"url":"http://localhost:4000/2022/08/02/license-checker-crackmes.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="Random stuff" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">Random stuff</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Simple License Checkers</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-08-02T00:00:00+02:00" itemprop="datePublished">Aug 2, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>Solving simple license checkers with radare2</p>
+
+<h2 id="license-checker-0x01">license checker 0x01</h2>
+<p><a href="https://crackmes.one/crackme/619eda7b33c5d455dece628d">NomanProdhan’s License Checker 0x01</a></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>r2 license_checker_1
+</code></pre></div></div>
+<p>print symbols with <code class="language-plaintext highlighter-rouge">is</code></p>
+
+<p><img src="/assets/license_checker_1/2022-08-02-143110.png" alt="alt text" title="Symbols" /></p>
+
+<p>Seek to the symbol main <code class="language-plaintext highlighter-rouge">s main</code></p>
+
+<p>Analyze the function with <code class="language-plaintext highlighter-rouge">af</code></p>
+
+<p>Print the function with <code class="language-plaintext highlighter-rouge">pdf</code></p>
+
+<p><img src="/assets/license_checker_1/2022-08-02-143145.png" alt="alt text" title="print main" /></p>
+
+<p>Inside main you can see the string it loads to compare against:</p>
+<pre><code class="language-assembly">lea rdx, str.KS_LICENSE_KEY_2021_REV_1 ; 0x2027 ; "KS-LICENSE-KEY-2021-REV-1"
+mov rsi, rdx
+mov rdi, rax
+call sym.imp.strcmp         ; int strcmp(const char *s1, const char *s2)
+</code></pre>
+<p>Solution: <code class="language-plaintext highlighter-rouge">./license_checker_1 KS-LICENSE-KEY-2021-REV-1</code></p>
+
+<h2 id="license-checker-0x02">license checker 0x02</h2>
+<p><a href="https://crackmes.one/crackme/61c62bde33c5d413767ca0a0">NomanProdhan’s License Checker 0x02</a></p>
+
+<p>Running the program with no args outputs:
+<code class="language-plaintext highlighter-rouge">Usage : %s &lt;your name here&gt; &lt;license key here&gt;</code></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>r2 license_checker_2
+</code></pre></div></div>
+<p>Check strings inside the binary with the <code class="language-plaintext highlighter-rouge">iz</code> command:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[0x0000115a]&gt; iz
+[Strings]
+nth paddr      vaddr      len size section type  string
+―――――――――――――――――――――――――――――――――――――――――――――――――――――――
+0   0x00002008 0x00002008 47  48   .rodata ascii Usage : %s &lt;your name here&gt; &lt;license key here&gt;\n
+1   0x00002038 0x00002038 12  13   .rodata ascii NomanProdhan
+2   0x00002045 0x00002045 25  26   .rodata ascii KS-LICENSE-KEY-2021-REV-2
+3   0x00002060 0x00002060 64  65   .rodata ascii Congratulations %s, premium service has been activated for you.\n
+4   0x000020a8 0x000020a8 39  40   .rodata ascii Sorry ! %s , %s is an invalid license.\n
+5   0x000020d0 0x000020d0 39  40   .rodata ascii Sorry ! %s , you don't have a license.\n
+</code></pre></div></div>
+<p>Check for symbols with the <code class="language-plaintext highlighter-rouge">is</code> command and grep with <code class="language-plaintext highlighter-rouge">~</code> for <code class="language-plaintext highlighter-rouge">main</code></p>
+
+<p>Command: <code class="language-plaintext highlighter-rouge">is~main</code></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>38  0x00001159 0x00001159 GLOBAL FUNC   259      main
+3   0x00000000 0x00000000 GLOBAL FUNC   16       imp.__libc_start_main
+</code></pre></div></div>
+<p>Seek to main function:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>s main
+</code></pre></div></div>
+<p>Grep for strcmp in the main:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[0x0000115a]&gt; pdf~strcmp
+0x000011ae      e88dfeffff     call sym.imp.strcmp         ; int strcmp(const char *s1, const char *s2)
+0x000011cf      e86cfeffff     call sym.imp.strcmp         ; int strcmp(const char *s1, const char *s2)
+</code></pre></div></div>
+<p>The first strcmp:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0x000011a1      488d15900e00.  lea rdx, str.NomanProdhan   ; 0x2038 ; "NomanProdhan"
+0x000011a8      4889d6         mov rsi, rdx
+0x000011ab      4889c7         mov rdi, rax
+0x000011ae      e88dfeffff     call sym.imp.strcmp         ; int strcmp(const char *s1, const char *s2)
+</code></pre></div></div>
+
+<p>Second strcmp:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0x000011c2      488d157c0e00.  lea rdx, str.KS_LICENSE_KEY_2021_REV_2 ; 0x2045 ; "KS-LICENSE-KEY-2021-REV-2"
+0x000011c9      4889d6         mov rsi, rdx
+0x000011cc      4889c7         mov rdi, rax
+0x000011cf      e86cfeffff     call sym.imp.strcmp         ; int strcmp(const char *s1, const char *s2)
+</code></pre></div></div>
+
+<p>Solution:
+<code class="language-plaintext highlighter-rouge">./license_checker_2 NomanProdhan KS-LICENSE-KEY-2021-REV-2</code></p>
+
+<h2 id="license-checker-0x03">license checker 0x03</h2>
+<p><a href="https://crackmes.one/crackme/62072dd633c5d46c8bcbfd9b">NomanProdhan’s License Checker 0x03</a></p>
+
+<p><code class="language-plaintext highlighter-rouge">r2 license_checker_3</code>
+Analyze symbols with <code class="language-plaintext highlighter-rouge">aa</code></p>
+
+<p>Print strings:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[0x00001179]&gt; iz
+[Strings]
+nth paddr      vaddr      len size section type  string
+―――――――――――――――――――――――――――――――――――――――――――――――――――――――
+0   0x00002008 0x00002008 51  52   .rodata ascii Usage : %s &lt;license pass code here [numbers only]&gt;\n
+1   0x00002040 0x00002040 35  36   .rodata ascii Premium access has been activated !
+2   0x00002064 0x00002064 18  19   .rodata ascii Wrong license code
+</code></pre></div></div>
+
+<p>Seek to main <code class="language-plaintext highlighter-rouge">s main</code></p>
+
+<p>Print summary of function with <code class="language-plaintext highlighter-rouge">pdfs</code>:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0x00001181 argc
+0x00001184 argv
+0x000011a7 str.Usage_:__s__license_pass_code_here__numbers_only___n
+0x000011ae str.Usage_:__s__license_pass_code_here__numbers_only___n
+0x000011b6 call sym.imp.printf
+0x000011c0 call sym.imp.exit
+0x000011c5:
+0x000011d5:
+0x000011f5 call sym.imp.atoi
+0x00001201:
+0x0000120f call sym.imp.strlen
+0x0000121f str.Premium_access_has_been_activated__
+0x00001226 str.Premium_access_has_been_activated__
+0x00001229 call sym.imp.puts
+0x00001233 call sym.imp.exit
+0x00001238:
+0x00001238 str.Wrong_license_code
+0x0000123f str.Wrong_license_code
+0x00001242 call sym.imp.puts
+0x0000124c call sym.imp.exit
+</code></pre></div></div>
+
+<p>Loop from main:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+┌─&gt; 0x55b204db41d5      488b45d0       mov rax, qword [var_30h]
+╎   0x55b204db41d9      4883c008       add rax, 8
+╎   0x55b204db41dd      488b10         mov rdx, qword [rax]
+╎   0x55b204db41e0      8b45f4         mov eax, dword [var_ch]
+╎   0x55b204db41e3      4898           cdqe
+╎   0x55b204db41e5      4801d0         add rax, rdx
+╎   0x55b204db41e8      0fb600         movzx eax, byte [rax]
+╎   0x55b204db41eb      8845ef         mov byte [var_11h], al
+╎   0x55b204db41ee      488d45ef       lea rax, [var_11h]
+╎   0x55b204db41f2      4889c7         mov rdi, rax
+╎   0x55b204db41f5      e866feffff     call sym.imp.atoi       ;[1] ; int atoi(const char *str)
+╎   0x55b204db41fa      0145f0         add dword [var_10h], eax // add the value returned from atoi
+╎   0x55b204db41fd      8345f401       add dword [var_ch], 1 	// add to the loop counter
+╎   0x55b204db4201      488b45d0       mov rax, qword [var_30h]
+╎   0x55b204db4205      4883c008       add rax, 8
+╎   0x55b204db4209      488b00         mov rax, qword [rax]
+╎   0x55b204db420c      4889c7         mov rdi, rax
+╎   0x55b204db420f      e82cfeffff     call sym.imp.strlen     ;[2] ; size_t strlen(const char *s)
+╎   0x55b204db4214      3945f4         cmp dword [var_ch], eax // check has looped strlen of argv[1]
+└─&lt; 0x55b204db4217      7cbc           jl 0x55b204db41d5
+    0x55b204db4219      837df032       cmp dword [var_10h], 0x32 // check if var_10h equals 0x32
+┌─&lt; 0x55b204db421d      7519           jne 0x55b204db4238
+│   0x55b204db421f      488d051a0e00.  lea rax, str.Premium_access_has_been_activated__    ; 0x55b204db5040 ; "Premium access has been activated !"
+</code></pre></div></div>
+<p><code class="language-plaintext highlighter-rouge">var_ch = loop counter</code></p>
+
+<p><code class="language-plaintext highlighter-rouge">var_10h = sum</code></p>
+
+<p>loops the length of input</p>
+
+<p>converts ascii to int</p>
+
+<p>adds the int in var_10h</p>
+
+<p>checks if looped strlen of input</p>
+
+<p>checks if var_10h is equal to 0x32</p>
+
+<p>Solution:
+Sum of all digits equal to 50</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./license_checker_3 5555555555
+Premium access has been activated !
+</code></pre></div></div>
+
+  </div><a class="u-url" href="/2022/08/02/license-checker-crackmes.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Random stuff</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Random stuff</li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Random stuff goes here sometimes</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
